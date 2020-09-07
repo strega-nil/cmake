@@ -86,6 +86,29 @@ function(CMAKE_DETERMINE_COMPILER_ID lang flagvar src)
     endif()
   endif()
 
+  # For ocaml we need to explicitly query the version.
+  if(lang STREQUAL "OCaml"
+     AND CMAKE_${lang}_COMPILER
+     AND NOT CMAKE_${lang}_COMPILER_VERSION)
+    execute_process(
+      COMMAND "${CMAKE_${lang}_COMPILER}"
+      -version
+      OUTPUT_VARIABLE output ERROR_VARIABLE output
+      RESULT_VARIABLE result
+      TIMEOUT 10
+    )
+    file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
+      "Running the ${lang} compiler: \"${CMAKE_${lang}_COMPILER}\" -version
+      ${output}\n")
+    
+    if(output MATCHES [[([0-9]+\.[0-9]+\.[0-9]+(\+[-a-z0-9]+)?)]])
+      set(CMAKE_${lang}_COMPILER_VERSION "${CMAKE_MATCH_1}")
+      if(NOT CMAKE_${lang}_COMPILER_ID)
+        set(CMAKE_OCaml_COMPILER_ID "OCaml")
+      endif()
+    endif()
+  endif()
+
   # For Swift we need to explicitly query the version.
   if(lang STREQUAL "Swift"
      AND CMAKE_${lang}_COMPILER
